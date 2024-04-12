@@ -6,12 +6,13 @@ use App\Http\Controllers\VendedorController;
 use App\Models\Categoria;
 use App\Models\Vehiculo;
 use App\Models\User;
+use App\Models\DatosPersonales;
 use App\Models\Rol;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use App\Http\Controllers\Auth\LoginController;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class LoginControllerTest extends TestCase
 {
@@ -68,7 +69,7 @@ class LoginControllerTest extends TestCase
 class VendedorControllerTest extends TestCase
 {
     use RefreshDatabase;
-
+    use HasFactory;
     /**
      * Test para la edición de un vehículo.
      *
@@ -132,4 +133,39 @@ class VendedorControllerTest extends TestCase
         $response->assertSee($vehiculo2->vehPlaca);
         $response->assertDontSee($vehiculo3->vehPlaca);
     }
+}
+class ActualizarDatosPersonalesTest extends TestCase
+{
+    use RefreshDatabase;
+    use HasFactory;
+    /**
+     * Test para verificar que los datos personales se actualizan correctamente.
+     *
+     * @return void
+     */
+    public function test_actualizar_datos_personales()
+    {
+        $user = User::factory()->create();
+        $datosPersonales = DatosPersonales::factory()->create(['user_id' => $user->id]);
+
+        // Simulamos una solicitud de actualización de datos personales
+        $response = $this->actingAs($user)
+            ->post(route('vendedor.editarPerfil'), [
+                'nombre' => 'Nuevo Nombre',
+                'apellido' => 'Nuevo Apellido',
+                'telefono' => '123456789',
+                'correo' => 'nuevo@example.com',
+            ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('datos_personales', [
+            'id' => $datosPersonales->id,
+            'datNombre' => 'Nuevo Nombre',
+            'datApellido' => 'Nuevo Apellido',
+            'datTelefono' => '123456789',
+            'datCorreo' => 'nuevo@example.com',
+        ]);
+    }
+    
 }
